@@ -1,4 +1,4 @@
-# Kita-Bibliothek
+# 📚 Kita-Bibliothek
 
 Ein Webprojekt zur Verwaltung und Ausleihe von Büchern in einer Kindertagesstätte (Kita).  
 Das System ist intuitiv gestaltet und bietet zwei verschiedene Ansichten – je nach Zielgruppe.
