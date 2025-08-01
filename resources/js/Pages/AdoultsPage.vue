@@ -3,6 +3,11 @@
     <div class="alert alert-primary text-center">
       Wir sind Erziehrinen
     </div>
+      <div class="container mt-5">
+        <div class="alert alert-primary text-center">
+        🐭 Willkommen bei KiTa Bucherei <strong>Kleine Mäuse</strong>
+        </div>
+    </div>
   </div>
 </template>
 <style scoped>
