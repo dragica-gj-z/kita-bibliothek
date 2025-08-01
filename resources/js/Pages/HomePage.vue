@@ -11,8 +11,9 @@
                     <label for="exampleInputPassword1" class="form-label">Password</label>
                     <input type="password" class="form-control" id="exampleInputPassword1">
                 </div>
+                <a href="#">Weiter ohne Amelden</a>
                 
-                <button type="submit" class="btn btn-primary">Submit</button>
+                <!-- <button type="submit" class="btn btn-primary">Submit</button> -->
             </form>
             
 
