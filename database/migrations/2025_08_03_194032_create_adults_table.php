@@ -19,7 +19,7 @@ return new class extends Migration
             $table->string('adult_street');
             $table->string('adult_hause_nr');
             $table->string('adult_city');
-            $table->string('adult_tel_r');
+            $table->string('adult_tel_nr');
             $table->timestamps();
         });
     }
