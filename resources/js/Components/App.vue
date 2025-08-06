@@ -1,6 +1,7 @@
 <template>
   <div id="app">
     <Navbar />
+    
     <!-- <Smiley /> -->
     <router-view /> <!-- Hier wird HomePage.vue geladen -->
     
