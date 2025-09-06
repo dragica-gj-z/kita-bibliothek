@@ -1,6 +1,6 @@
+<!-- Register.vue -->
 <template>
-
-    <form class="register-form" @submit.prevent="registerNewUser">
+    <form class="register-form" @submit.prevent="registerNewUser" novalidate>
 
         <div class="mb-3">
         <label for="name" class="form-label">Name</label>
@@ -9,8 +9,13 @@
             class="form-control" 
             name="name"
             required
-            v-model="form.name"
+            v-model.trim="form.name"
+            :class="{ 'is-invalid': fieldErrors.name }"
             >
+            <div v-if="fieldErrors.name" class="invalid-feedback">
+                {{ fieldErrors.name }}
+            </div>
+
         </div>
 
         <div class="mb-3">
@@ -20,7 +25,8 @@
             class="form-control" 
             name="email"
             required
-            v-model="form.email"
+            v-model.trim="form.email"
+            :class="{ 'is-invalid': fieldErrors.email }"
             >
         </div>
 
@@ -31,7 +37,11 @@
             name="password"
             required
             v-model="form.password"
+            :class="{ 'is-invalid': fieldErrors.password }"
             >
+            <div v-if="fieldErrors.password" class="invalid-feedback">
+                {{ fieldErrors.password }}
+            </div>
         </div>
 
         <div class="mb-3">
@@ -42,12 +52,14 @@
             name="password_confirmation"
             required
             v-model="form.passwordConfirmation"
+            :class="{ 'is-invalid': fieldErrors.password_confirmation }"
             >
+            <div v-if="fieldErrors.password_confirmation" class="invalid-feedback">
+                {{ fieldErrors.password_confirmation }}
+            </div>
         </div>
-
-        <button type="submit" class="btn btn-primary">Registrieren</button>
-
-        <p v-if="errorMessage" class="text-danger">{{ errorMessage }}</p>
+        <AuthSwitch mode="register" :disabled="loading" />
+        <p v-if="errorMessage" class="text-danger mt-2">{{ errorMessage }}</p>
 
     </form>
    
@@ -56,9 +68,12 @@
 
 <script>
 import axios from 'axios';
+import AuthSwitch from "./AuthSwitch.vue";
+
 
 export default {
     name: "Register",
+    components: { AuthSwitch },
 
     data () {
         return {
@@ -66,32 +81,69 @@ export default {
                 name: '',
                 email: '',
                 password: '',
-                passwordConfirmation: '',   
+                passwordConfirmation: '', 
             },
+            loading: false,
             errorMessage: '',
+            fieldErrors: {}
         }
     },
 
     methods: {
         async registerNewUser () {
-            axios.defaults.headers.common['X-CSRF-TOKEN'] =
-            document.querySelector('meta[name="csrf-token"]').getAttribute('content');
+      
+            this.errorMessage = ''
+            this.fieldErrors = {}
+
+            if (!this.form.email || !/.+@.+\..+/.test(this.form.email)) {
+                this.fieldErrors.email = 'Bitte eine gültige E-Mail eingeben.'
+            }
+            if (!this.form.password) {
+                this.fieldErrors.password = 'Bitte Passwort eingeben.'
+            } else if (this.form.password !== this.form.passwordConfirmation) {
+                this.fieldErrors.password_confirmation = 'Passwörter stimmen nicht überein.'
+            }
+            if (!this.form.name) {
+                this.fieldErrors.name = 'Bitte Name eingeben.'
+            }
+            if (Object.keys(this.fieldErrors).length) return
+
+            this.loading = true
             try {
-                await axios.post ('/register', {
+                const res = await axios.post('/register', {
                     name: this.form.name,
                     email: this.form.email,
                     password: this.form.password,
                     password_confirmation: this.form.passwordConfirmation
-                });
-                this.$router.push('/adults');
-            } catch (error){
-                console.error(error);
-                this.$router.push('/');
-                this.errorMessage = 'Registrierung fehlgeschlagen. Bitte erneut versuchen.';
+                })
+
+                if (res.status === 201 || res.status === 204 || (res.data && (res.data.user || res.data.success))) {
+                this.$router.push({ name: 'login', query: { registered: '1' } });
+                return;
+                }
+                this.errorMessage = 'Registrierung fehlgeschlagen. Bitte erneut versuchen.'
+            } catch (err) {
+                const r = err?.response
+
+                if (r?.status === 422 && r.data?.errors) {
+                this.fieldErrors = Object.fromEntries(
+                    Object.entries(r.data.errors).map(([k, v]) => [k, Array.isArray(v) ? v[0] : String(v)])
+                )
+                this.errorMessage = r.data?.message || 'Bitte Eingaben prüfen.'
+                } else if (r?.status === 409) {
+                this.fieldErrors.email = 'Diese E-Mail ist bereits vergeben.'
+                } else {
+                this.errorMessage = 'Unerwarteter Fehler. Bitte später erneut versuchen.'
+                }
+            } finally {
+                this.loading = false
             }
         }
+  
     }
 
 }
 
 </script>
+
+<style lang="scss" src="../../css/home-page.scss"></style>

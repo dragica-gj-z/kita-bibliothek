@@ -3,12 +3,17 @@ import { createRouter, createWebHistory } from "vue-router"
 import HomePage from "./Pages/HomePage.vue"
 import AdoultsPage from "./Pages/AdultsPage.vue"
 import KidsPage from "./Pages/KidsPage.vue"
+import Register from "./Components/Register.vue"
+import Login from "./Components/Login.vue"
 
 const routes = [
     {
         path: '/',
-        name: 'home',
-        component: HomePage,
+        component: HomePage,          
+        children: [
+            { path: '', name: 'login', component: Login },
+            { path: 'register', name: 'register', component: Register },
+        ],
     },
     {
         path: '/kids',
@@ -20,6 +25,7 @@ const routes = [
         name: 'adults',
         component: AdoultsPage,
     },
+    
 ]
 const router = createRouter ({
         history: createWebHistory(),

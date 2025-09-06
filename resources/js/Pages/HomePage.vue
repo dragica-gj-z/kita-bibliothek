@@ -1,20 +1,10 @@
+<!-- HomePage.vue -->
 <template>
-  
-    <div class="home-page">
-        <div class="overlay">
-           
-            <Register />
-            <Login />
-            
-
-        </div>
+  <div class="home-page">
+    <div class="overlay">
+      <router-view />  <!-- HIER erscheinen Login/Registrieren -->
     </div>
-
-    
-    
-   
-
-  
+  </div>
 </template>
 
 <script>
@@ -27,9 +17,23 @@ export default{
     components: {
         Login,
         Register,
+    },
+
+    data () {
+        return {
+            showLogin: true
+        }
+    },
+
+    methods: {
+        toggle () {
+            this.showLogin = !this.showLogin
+        },
+        switchToLogin() { 
+            this.showLogin = true 
+        },
     }
 }
-
 
 </script>
 

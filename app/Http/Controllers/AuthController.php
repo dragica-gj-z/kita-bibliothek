@@ -23,19 +23,21 @@ class AuthController extends Controller
         return response()->json(['success' => true], 200);
     }
 
-    public function login (Request $request)
+    public function login(Request $request)
     {
-        $validated = $request->validate([
-            'email' => 'required|email',
-            'password' => 'required|string',
+        $credentials = $request->validate([
+            'email'    => ['required','email'],
+            'password' => ['required'],
         ]);
 
+        $remember = (bool) $request->boolean('remember');
 
-        if (Auth::attempt($validated)) {
-            $request->session()->regenerate();
+        if (! Auth::attempt($credentials, $remember)) {
+            return response()->json(['message' => 'Unauthorized'], 401);
         }
-
-        return response()->json(['success' => true], 200);
+        $request->session()->regenerate();
+       
+        return response()->json(['success' => true, 'user' => Auth::user()], 200);
     }
 
     public function logout(Request $request)
