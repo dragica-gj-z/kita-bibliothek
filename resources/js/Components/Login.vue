@@ -27,9 +27,9 @@
         </div>
 
         <AuthSwitch mode="login" :disabled="loading" />
-        <p v-if="errorMessage" class="text-danger mt-2">{{ errorMessage }}</p>
+        <p v-if="errorMessage" class="error-msg mt-2">{{ errorMessage }}</p>
 
-         <div v-if="successMessage" class="alert-success mt-3" >
+         <div v-if="successMessage" class="success-msg mt-3" >
             {{ successMessage }}
         </div>
     </form>
@@ -57,11 +57,11 @@ export default {
     },
 
     created() {
-        this.consumeRegistrationFlash();
+        this.consumeFlash();
     },
     watch: {
         '$route.query.registered': function () {
-        this.consumeRegistrationFlash();
+        this.consumeFlash();
         }
     },
 
@@ -78,7 +78,7 @@ export default {
                     this.$router.push('/adults');
                 return;
                 }
-                this.errorMessage = 'Einloggen fehlgeschlagen. Bitte erneut versuchen.';
+                this.errorMessage = 'Einloggen fehlgeschlagen. \nBitte erneut versuchen.';
             } catch (err) {
                 const r = err?.response;
                 if (r && (r.status === 401 || r.status === 403)) {
@@ -86,20 +86,25 @@ export default {
                 } else if (r && r.status === 422) {
                     this.errorMessage = r.data?.message || 'Bitte Eingaben prüfen.';
                 } else {
-                    this.errorMessage = 'Unerwarteter Fehler. Bitte später erneut versuchen.';
+                    this.errorMessage = 'Unerwarteter Fehler. \nBitte später erneut versuchen.';
                 }
-        }
-    },
+            }
+        },
 
-    consumeRegistrationFlash() {
-      if (this.$route.query.registered) {
-        this.successMessage = 'Ihr Konto wurde erfolgreich erstellt. \nSie können sich jetzt einloggen. :)';
-
-        const { registered, ...rest } = this.$route.query;
-            this.$router.replace({ query: rest });
-      }
-    },
-  }
+        consumeFlash(){
+            const q = this.$route.query;
+            if (q.registered) {
+                this.successMessage = 'Ihr Konto wurde erfolgreich erstellt.\nBitte melden Sie sich jetzt an.';
+            } else if (q.loggedout) {
+                this.successMessage = 'Sie wurden abgemeldet.';
+            } else {
+                this.successMessage = ''; 
+                return;
+            }
+            const { registered, loggedout, ...rest } = q;
+                this.$router.replace({ query: rest });
+        },
+    }
 }
 </script>
 

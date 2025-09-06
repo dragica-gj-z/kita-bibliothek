@@ -18,7 +18,8 @@
                     <router-link to="/kids">Kinder-Modus</router-link>
                 </li>
                 <li class="nav-item">
-                    <button type="button" class="btn btn-outline-primary" @click="userLogout">Abmelden</button>
+                    <button type="button" class="btn btn-outline-primary" @click="userLogout" :disabled="loading">
+                        {{ loading ? 'Abmelden…' : 'Abmelden' }}</button>
                 </li>
             </ul>
             </div>
@@ -31,26 +32,48 @@
 import axios from 'axios';
 
 export default {
+    data(){ 
+        return { 
+            loading: false, 
+            error: '' 
+        } 
+    },
 
+    methods:{
+        async userLogout(){
+            this.loading = true; this.error = '';
 
-    methods: {
-        async userLogout (){
-            axios.defaults.headers.common['X-CSRF-TOKEN'] =
-            document.querySelector('meta[name="csrf-token"]').getAttribute('content');
-            axios.defaults.withCredentials = true;
+            const doLogout = () =>
+                axios.post('/logout', null, { validateStatus: s => s < 500 }); // 4xx in then-Zweig
+
             try {
-                await axios.post('/logout');
-                this.$router.push('/');
-        
-            }catch(error) {
-                console.error('Logout fehlgeschlagen', {
-    status: error.response?.status,
-    data: error.response?.data,   // << wichtig
-  });
+                let res = await doLogout();
+
+                if (res.status === 419) {
+                    await axios.get('/', { params: { _t: Date.now() }, validateStatus: s => s < 500 });
+                    res = await doLogout();
+                }
+
+                if (res.status === 204 || res.status === 200 || res.status === 401 || res.status === 302) {
+                    this.$router.replace({ path: '/', query: { loggedout: '1' } });
+                    return;
+                }
+
+                if (res.status === 419) {
+                    this.error = 'Sicherheits-Token erneuern…';
+                    setTimeout(() => window.location.replace('/'), 400);
+                    return;
+                }
+
+                this.error = 'Abmelden fehlgeschlagen. Bitte erneut versuchen.';
+            } catch (e) {
+                this.error = 'Netzwerkfehler beim Abmelden.';
+                console.error('Logout error', e);
+            } finally {
+                this.loading = false;
             }
-            
         }
-    }
+  }
 }
 
 </script>

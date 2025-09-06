@@ -40,15 +40,13 @@ class AuthController extends Controller
         return response()->json(['success' => true, 'user' => Auth::user()], 200);
     }
 
-    public function logout(Request $request)
-{
-        Auth::logout();
-            $request->session()->invalidate();
-            $request->session()->regenerateToken();
-        return response()->json(['success' => true], 200);
-    
-}
-
-
-
+    public function logout(\Illuminate\Http\Request $request)
+    {
+        if (\Illuminate\Support\Facades\Auth::check()) {
+            \Illuminate\Support\Facades\Auth::logout();
+        }
+        $request->session()->invalidate();
+        $request->session()->regenerateToken();
+        return response()->noContent(); // 204
+    }
 }
