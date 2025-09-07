@@ -100,11 +100,14 @@ export default {
             }
             if (!this.form.password) {
                 this.fieldErrors.password = 'Bitte Passwort eingeben.'
+            } else if (this.form.password.length < 8) {
+                this.fieldErrors.password = 'Passwort muss mindestens 8 Zeichen enthalten.'
+            }
+
+            if (!this.form.passwordConfirmation) {
+                this.fieldErrors.password_confirmation = 'Bitte Passwort wiederholen.'
             } else if (this.form.password !== this.form.passwordConfirmation) {
                 this.fieldErrors.password_confirmation = 'Passwörter stimmen nicht überein.'
-            }
-            if (!this.form.name) {
-                this.fieldErrors.name = 'Bitte Name eingeben.'
             }
             if (Object.keys(this.fieldErrors).length) return
 
