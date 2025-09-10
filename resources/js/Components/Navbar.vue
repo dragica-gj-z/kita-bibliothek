@@ -1,21 +1,25 @@
 <template>
 
     <nav class="navbar navbar-expand-lg navbar-light bg-light">
-        <div class="container-fluid">
-            <a class="navbar-brand" href="#">Navbar</a>
-            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
-            <span class="navbar-toggler-icon"></span>
-            </button>
             <div class="collapse navbar-collapse" id="navbarNav">
             <ul class="navbar-nav">
                 <li class="nav-item">
-                    <router-link to="/">Startseite</router-link>
+                    <router-link class="nav-link" to="/">Startseite</router-link>
                 </li>
                 <li class="nav-item">
-                    <router-link to="/adults">Erzieher:innen-Modus</router-link>
+                    <router-link 
+                        class="nav-link dropdown-toggle" to="/adults">Erzieher:innen-Modus</router-link>
+                    <ul class="dropdown-menu">
+                        <li>
+                            <router-link class="dropdown-item" to="/addBooks">Bücher einlegen</router-link>
+                        </li>
+                    </ul>
+                </li>
+                <li class="nav-item"> 
+                    <router-link class="nav-link" to="/addBooks">Bücher einlegen</router-link>
                 </li>
                 <li class="nav-item">
-                    <router-link to="/kids">Kinder-Modus</router-link>
+                    <router-link  class="nav-link" to="/kids">Kinder-Modus</router-link>
                 </li>
                 <li class="nav-item">
                     <button type="button" class="btn btn-outline-primary" @click="userLogout" :disabled="loading">
@@ -23,7 +27,6 @@
                 </li>
             </ul>
             </div>
-        </div>
     </nav>
 
 </template>

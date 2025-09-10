@@ -5,6 +5,7 @@ import AdoultsPage from "./Pages/AdultsPage.vue"
 import KidsPage from "./Pages/KidsPage.vue"
 import Register from "./Components/Register.vue"
 import Login from "./Components/Login.vue"
+import AddBooks from "./Pages/AddBooks.vue"
 
 const routes = [
     {
@@ -24,6 +25,11 @@ const routes = [
         path: '/adults',
         name: 'adults',
         component: AdoultsPage,
+    },
+    {
+        path: '/addBooks',
+        name: 'addBooks',
+        component: AddBooks,
     },
     
 ]
