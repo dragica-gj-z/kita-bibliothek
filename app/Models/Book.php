@@ -11,24 +11,31 @@ class Book extends Model
 {
     use HasFactory;
 
+    protected $table = 'books';
+
+    // Primärschlüssel
     protected $primaryKey = 'book_id';
     public $incrementing = true;
-   
+    protected $keyType = 'int';
+
+    // timestamps sind in deinen Migrationen vorhanden → Standard ist true
+    // public $timestamps = true; // (nur zur Info)
+
     protected $fillable = [
-        'isbn',
-        'title',
-        'author',
+        'isbn', 
+        'title', 
+        'author', 
         'description',
-        'status',
-        'condition',
+        'status', 
+        'condition', 
         'category_per_age',
     ];
 
+    // Wenn du Enums verwendest (empfohlen)
     protected $casts = [
-        'status'           => BookStatus::class,
-        'condition'        => BookCondition::class,
+        'condition' => BookCondition::class,
+        'status'    => BookStatus::class,
     ];
-
     public function adults()
     {
         return $this->belongsToMany(Adult::class, 'adults_books');
