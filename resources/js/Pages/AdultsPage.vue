@@ -76,8 +76,9 @@ export default {
   },
 
   created() {
-    this.loadBooks()
-  },
+  console.log('[AdultsPage] created() läuft');
+  this.loadBooks();
+},
 
   methods: {
     async loadBooks() {
