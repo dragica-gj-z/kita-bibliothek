@@ -1,25 +1,94 @@
+# services:
+#   app:
+#     build:
+#       context: .
+#       dockerfile: Dockerfile
+#     environment:
+#       APP_ENV: production
+#       APP_DEBUG: "false"
+#       DB_CONNECTION: mysql
+#       DB_HOST: db
+#       DB_PORT: 3306
+#       DB_DATABASE: ${DB_DATABASE}
+#       DB_USERNAME: ${DB_USERNAME}
+#       DB_PASSWORD: ${DB_PASSWORD}
+#       RUN_SEEDERS: "true"
+#     volumes:
+#       - .:/var/www/html
+#     ports:
+#       - "8080:80"
+#     depends_on:
+#       db:
+#         condition: service_healthy
+
+#   db:
+#     image: mysql:8.0
+#     environment:
+#       MYSQL_DATABASE: ${DB_DATABASE}
+#       MYSQL_USER: ${DB_USERNAME}
+#       MYSQL_PASSWORD: ${DB_PASSWORD}
+#       MYSQL_ROOT_PASSWORD: ${DB_ROOT_PASSWORD}
+#     volumes:
+#       - dbdata:/var/lib/mysql
+#     healthcheck:
+#       # nutzt die gleiche Root-PW-Variable
+#       test: ["CMD-SHELL", "mysqladmin ping -h localhost -p${DB_ROOT_PASSWORD} || exit 1"]
+#       interval: 3s
+#       timeout: 3s
+#       retries: 20
+#     ports:
+#       - "3307:3306"
+
+#   phpmyadmin:
+#     image: phpmyadmin/phpmyadmin:latest
+#     restart: always
+#     ports:
+#       - "8081:80"
+#     environment:
+#       PMA_HOST: db
+#       PMA_PORT: 3306
+#       PMA_USER: root
+#       PMA_PASSWORD: ${DB_ROOT_PASSWORD}  # muss zum Root-PW passen
+#     depends_on:
+#       db:
+#         condition: service_healthy
+
+# volumes:
+#   dbdata:
+
 services:
   app:
     build:
       context: .
       dockerfile: Dockerfile
+    # CHANGED: Für Server-Deploy lieber prod-Defaults setzen
     environment:
-      APP_ENV: local
-      APP_DEBUG: "true"
+      APP_ENV: production            # CHANGED (war: local)
+      APP_DEBUG: "false"             # CHANGED (war: "true")
       DB_CONNECTION: mysql
       DB_HOST: db
       DB_PORT: 3306
       DB_DATABASE: ${DB_DATABASE}
       DB_USERNAME: ${DB_USERNAME}
       DB_PASSWORD: ${DB_PASSWORD}
-      RUN_SEEDERS: "true"
+      # NOTE: Seeder in Prod nur gezielt ausführen; daher entfernt.
+      # RUN_SEEDERS: "true"          # REMOVED – Seeder per Artisan laufen lassen
+    # NOTE: Bind-Mount lässt Code direkt vom Server-Repo laufen (ok für Staging/Einzelserver).
+    #       Für “immutable” Prod-Deploys lieber OHNE Mount arbeiten und im Dockerfile COPY nutzen.
     volumes:
-      - .:/var/www/html
+      - .:/var/www/html              # KEEP (für deinen aktuellen Workflow ok)
     ports:
       - "8080:80"
     depends_on:
       db:
         condition: service_healthy
+    restart: unless-stopped          # CHANGED: robustere Neustart-Policy
+    # OPTIONAL HEALTHCHECK (falls du Nginx/PHP-FPM im Container hast und /health bereitstellst)
+    # healthcheck:
+    #   test: ["CMD-SHELL", "curl -fsS http://localhost/health || exit 1"]
+    #   interval: 10s
+    #   timeout: 3s
+    #   retries: 10
 
   db:
     image: mysql:8.0
@@ -31,28 +100,29 @@ services:
     volumes:
       - dbdata:/var/lib/mysql
     healthcheck:
-      # nutzt die gleiche Root-PW-Variable
+      # NOTE: nutzt das Root-PW aus .env – ok
       test: ["CMD-SHELL", "mysqladmin ping -h localhost -p${DB_ROOT_PASSWORD} || exit 1"]
       interval: 3s
       timeout: 3s
       retries: 20
     ports:
-      - "3307:3306"
+      - "3307:3306"                  # NOTE: bewusst NICHT 3306 exposed (vermeidet Konflikte)
+    restart: unless-stopped          # CHANGED: Neustart-Policy ergänzt
 
   phpmyadmin:
-    image: phpmyadmin/phpmyadmin:latest
-    container_name: laravel-pma
-    restart: always
+    image: phpmyadmin:5              # CHANGED: Tag gepinnt (vermeidet Überraschungen mit 'latest')
+    restart: unless-stopped          # CHANGED: Neustart-Policy ergänzt
     ports:
       - "8081:80"
     environment:
       PMA_HOST: db
       PMA_PORT: 3306
       PMA_USER: root
-      PMA_PASSWORD: ${DB_ROOT_PASSWORD}  # muss zum Root-PW passen
+      PMA_PASSWORD: ${DB_ROOT_PASSWORD}  # NOTE: muss zum Root-PW passen
     depends_on:
       db:
         condition: service_healthy
 
 volumes:
   dbdata:
+
