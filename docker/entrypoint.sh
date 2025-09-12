@@ -51,30 +51,43 @@ fi
 # 3) Vite / Assets Build (optional & idempotent)
 if [ "${BUILD_ASSETS}" = "true" ] && [ -f package.json ]; then
   need_build="false"
-  if [ ! -f public/build/manifest.json ]; then
+
+  # Neu bauen, wenn Manifest fehlt ODER wenn erzwingen aktiv ist
+  if [ ! -f public/build/manifest.json ] && [ ! -f public/build/.vite/manifest.json ]; then
     need_build="true"
   fi
   if [ "${FORCE_ASSETS_BUILD}" = "true" ]; then
     need_build="true"
   fi
+  # → Wenn du wirklich IMMER neu bauen willst:
+  # need_build="true"
 
   if [ "${need_build}" = "true" ]; then
-    log "Building front-end assets (install devDependencies + production build)"
-    # devDependencies installieren, unabhängig vom globalen NODE_ENV
+    log "Building front-end assets → public/build"
+
+    # Dev-Dependencies für den Build
     if [ -f package-lock.json ]; then
       NODE_ENV= npm ci --no-audit --no-fund
     else
       NODE_ENV= npm install --no-audit --no-fund
     fi
 
-    # Production-Build erzeugen (z. B. Vite)
+    # Alte Hash-Dateien entfernen
+    rm -rf public/build
+    mkdir -p public/build
+
+    # Production-Build (Vite muss outDir=public/build haben)
     if NODE_ENV=production npm run build; then
+      # Manifest an einem der beiden möglichen Orte?
+      if [ ! -f public/build/manifest.json ] && [ ! -f public/build/.vite/manifest.json ]; then
+        warn "Build finished but manifest is missing"; exit 1
+      fi
       log "Assets built successfully."
     else
       warn "Asset build failed"; exit 1
     fi
   else
-    log "Skipping asset build (public/build/manifest.json exists and FORCE_ASSETS_BUILD=false)."
+    log "Skipping asset build (up-to-date and FORCE_ASSETS_BUILD=false)."
   fi
 else
   log "Skipping asset build (BUILD_ASSETS=false or no package.json)."
