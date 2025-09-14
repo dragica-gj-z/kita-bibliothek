@@ -1,0 +1,55 @@
+.navbar {
+    width: 100%;
+    background-color: #461db7 !important;
+    // background-color: #4beb77 !important;
+
+    #navbarNav {
+        display: flex;
+        align-items: center;
+        color: #c7efa9;
+        // color: #ff6b6b;
+        p {
+            margin: 0;
+        }
+        .navbar-nav {
+            .nav-item {
+                display: flex;
+                .nav-link {
+                    width: 170px;
+                    border-radius: 5px;
+                    color: #A1FA5B;
+                    font-size: larger;
+                    text-align: center;
+                }
+            }
+            .nav-link:hover {
+                background-color: #5824E5;
+
+            }
+        }
+        
+    }
+    
+    
+}
+
+/* Color Theme Swatches in Hex */
+.Vineyard-KidZone-Logo-1-hex { color: #F207CB; }
+.Vineyard-KidZone-Logo-2-hex { color: #0798F2; }
+.Vineyard-KidZone-Logo-3-hex { color: #7CD91E; }
+.Vineyard-KidZone-Logo-4-hex { color: #F2E205; }
+.Vineyard-KidZone-Logo-5-hex { color: #F28705; }
+
+/* Color Theme Swatches in Hex */
+.Bazalt-Iskola---book-illustrations-1-hex { color: #2A8C70; }
+.Bazalt-Iskola---book-illustrations-2-hex { color: #B3F2CF; }
+.Bazalt-Iskola---book-illustrations-3-hex { color: #75D966; }
+.Bazalt-Iskola---book-illustrations-4-hex { color: #E3F26D; }
+.Bazalt-Iskola---book-illustrations-5-hex { color: #F2594B; }
+
+/* Color Theme Swatches in Hex */
+.Nike-Kids-1-hex { color: #D97ED3; }
+.Nike-Kids-2-hex { color: #8FCBD9; }
+.Nike-Kids-3-hex { color: #08A66C; }
+.Nike-Kids-4-hex { color: #D9CB07; }
+.Nike-Kids-5-hex { color: #BF665E; }
