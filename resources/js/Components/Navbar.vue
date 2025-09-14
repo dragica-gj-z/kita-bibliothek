@@ -1,38 +1,64 @@
 <template>
+  <nav class="navbar navbar-expand-lg navbar-light bg-light">
+    <div class="collapse navbar-collapse justify-content-end" id="navbarNav">
+        <p class="ms-5">Dragica Gjosheva Zafirova</p>
 
-    <nav class="navbar navbar-expand-lg navbar-light bg-light">
-            <div class="collapse navbar-collapse" id="navbarNav">
-            <ul class="navbar-nav">
-                <li class="nav-item">
-                    <router-link class="nav-link" to="/">Startseite</router-link>
-                </li>
-                <li class="nav-item">
-                    <router-link 
-                        class="nav-link dropdown-toggle" to="/adults">Erzieher:innen-Modus</router-link>
-                    <ul class="dropdown-menu">
-                        <li>
-                            <router-link class="dropdown-item" to="/addBooks">Bücher einlegen</router-link>
-                        </li>
-                    </ul>
-                </li>
-                <li class="nav-item"> 
-                    <router-link class="nav-link" to="/addBooks">Bücher einlegen</router-link>
-                </li>
-                <li class="nav-item">
-                    <router-link  class="nav-link" to="/kids">Kinder-Modus</router-link>
-                </li>
-                <li class="nav-item">
-                    <button type="button" class="btn btn-outline-primary" @click="userLogout" :disabled="loading">
-                        {{ loading ? 'Abmelden…' : 'Abmelden' }}</button>
-                </li>
-            </ul>
-            </div>
-    </nav>
+      <ul class="navbar-nav ms-auto gap-2">
+        <li class="nav-item dropdown">
+          <button
+            v-if="$route.path.startsWith('/adults')"
+            key="adults-toggle"
+            type="button"
+            class="nav-link dropdown-toggle btn btn-link p-0"
+            data-bs-auto-close="false"
+            aria-expanded="false"
+            ref="adultsToggle"
+            @click="toggleAdultsDropdown"
+          >
+            Für Erzieher
+          </button>
 
+          <router-link
+            v-else
+            key="adults-link"
+            class="nav-link"
+            to="/adults"
+          >
+            Für Erzieher
+          </router-link>
+
+          <ul class="dropdown-menu">
+            <li>
+              <router-link class="dropdown-item" to="/addBooks">
+                Bücher einlegen
+              </router-link>
+            </li>
+          </ul>
+        </li>
+
+        <li class="nav-item">
+          <router-link class="nav-link" to="/kids">Für Kinder</router-link>
+        </li>
+
+        <li class="nav-item">
+          <button
+            type="button"
+            class="btn btn-outline-primary me-5"
+            @click="userLogout"
+            :disabled="loading"
+          >
+            {{ loading ? 'Abmelden…' : 'Abmelden' }}
+          </button>
+        </li>
+
+      </ul>
+    </div>
+  </nav>
 </template>
 
 <script>
 import axios from 'axios';
+import { Dropdown } from 'bootstrap';
 
 export default {
     data(){ 
@@ -42,7 +68,30 @@ export default {
         } 
     },
 
+    mounted() {
+        this.initAdultsDropdown()
+    },
+
+    watch: {
+        '$route.path'(val) {
+            if (val.startsWith('/adults')) this.$nextTick(() => this.initAdultsDropdown())
+            else this._adultsDd?.dispose?.()
+        }
+    },
+
+    
     methods:{
+        initAdultsDropdown() {
+            const el = this.$refs.adultsToggle
+            if (!el) return
+            this._adultsDd?.dispose?.()
+            this._adultsDd = Dropdown.getOrCreateInstance(el, { autoClose: false }) // bleibt offen
+        },
+        toggleAdultsDropdown(e) {
+            e.preventDefault()
+            this._adultsDd?.toggle()
+        },
+
         async userLogout(){
             this.loading = true; this.error = '';
 
@@ -75,8 +124,14 @@ export default {
             } finally {
                 this.loading = false;
             }
-        }
-  }
+        },
+
+        beforeUnmount() {
+            this._adultsDd?.dispose?.()
+        },
+    }
 }
 
 </script>
+
+<!-- <style lang="scss" src="/resources/css/navbar.scss"></style> -->

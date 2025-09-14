@@ -1,3 +1,10 @@
+body {
+  font-family: 'Arial', sans-serif;
+  margin: 0;
+  padding: 0;
+  color: #333;
+}
+
 .success-msg{
     white-space: pre-line;
     color: #11016D;
@@ -7,3 +14,9 @@
     white-space: pre-line;
     color: #f31717;
 }
+
+
+@import 'home-page';
+@import 'navbar';
+@import 'smiley';
+@import 'table';
