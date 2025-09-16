@@ -58,15 +58,16 @@ export default {
   
 
   computed: {
+    // Sichtbare Spalten in gewünschter Reihenfolge; nur nehmen, was da ist
     columns() {
       if (!this.books.length) return []
       const wanted = [
         'isbn',
         'title',
         'author',
-        'age_group',        
-        'condition_label',  
-        'status_label',    
+        'age_group',        // kommt als '3-6' etc.
+        'condition_label',  // hübscher Text aus Backend-Config
+        'status_label',     // hübscher Text aus Backend-Config
         'created_at'
       ]
       const first = this.books[0]
@@ -75,8 +76,7 @@ export default {
   },
 
   created() {
-    console.log('[AdultsPage] created() läuft');
-    this.loadBooks();
+    this.loadBooks()
   },
 
   methods: {
@@ -130,6 +130,3 @@ export default {
   }
 }
 </script>
-
-<!-- <style lang="scss" src="/resources/css/table.scss"></style> -->
-
