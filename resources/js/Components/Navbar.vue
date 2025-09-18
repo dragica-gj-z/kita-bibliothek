@@ -43,7 +43,7 @@
         <li class="nav-item">
           <button
             type="button"
-            class="btn btn-outline-primary me-5"
+            class="logout-btn me-5"
             @click="userLogout"
             :disabled="loading"
           >
@@ -134,4 +134,4 @@ export default {
 
 </script>
 
-<!-- <style lang="scss" src="/resources/css/navbar.scss"></style> -->
+<style lang="scss" src="/resources/css/navbar.scss"></style>

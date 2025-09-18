@@ -50,4 +50,4 @@ COPY docker/entrypoint.sh /usr/local/bin/entrypoint.sh
 RUN chmod +x /usr/local/bin/entrypoint.sh
 
 ENTRYPOINT ["entrypoint.sh"]
-CMD ["apache2-foreground"]   # <- kein Punkt am Ende
+CMD ["apache2-foreground"]  

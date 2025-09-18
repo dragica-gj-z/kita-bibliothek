@@ -56,7 +56,6 @@ export default {
       }
   },
   
-
   computed: {
     // Sichtbare Spalten in gewünschter Reihenfolge; nur nehmen, was da ist
     columns() {
