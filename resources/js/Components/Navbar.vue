@@ -9,7 +9,7 @@
             v-if="$route.path.startsWith('/adults')"
             key="adults-toggle"
             type="button"
-            class="nav-link dropdown-toggle btn btn-link p-0"
+            class="nav-link dropdown-toggle btn btn-link p-0 active-link"
             data-bs-auto-close="false"
             aria-expanded="false"
             ref="adultsToggle"
@@ -23,6 +23,7 @@
             key="adults-link"
             class="nav-link"
             to="/adults"
+            active-class="active-link"
           >
             Für Erzieher
           </router-link>
@@ -43,7 +44,7 @@
         <li class="nav-item">
           <button
             type="button"
-            class="logout-btn me-5"
+            class="logout-btn me-2"
             @click="userLogout"
             :disabled="loading"
           >
@@ -134,4 +135,3 @@ export default {
 
 </script>
 
-<style lang="scss" src="/resources/css/navbar.scss"></style>
