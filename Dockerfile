@@ -19,7 +19,6 @@ RUN mkdir -p /etc/apt/keyrings \
  > /etc/apt/sources.list.d/nodesource.list \
  && apt-get update && apt-get install -y nodejs \
  && node -v && npm -v
-
 # Apache Rewrite
 RUN a2enmod rewrite
 
@@ -39,6 +38,7 @@ WORKDIR /var/www/html
 
 # Rechte (optional – meist durch Bind-Mount egal)
 RUN chown -R www-data:www-data /var/www/html
+RUN git config --global --add safe.directory /var/www/html
 
 # Flags für Asset-Build im entrypoint
 ENV BUILD_ASSETS=true \

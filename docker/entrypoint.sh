@@ -79,7 +79,7 @@ if [ "${BUILD_ASSETS}" = "true" ] && [ -f package.json ]; then
 else
   log "Skipping asset build (BUILD_ASSETS=false or no package.json)."
 fi
-
+  
 # 4) Rechte fixen (idempotent)
 if [ -d storage ] && [ -d bootstrap/cache ]; then
   log "Fixing permissions for storage/ and bootstrap/cache/"
