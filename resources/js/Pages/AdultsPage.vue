@@ -36,10 +36,10 @@
     </table>
 
     <!-- Optionales Debugging -->
-    <details class="mt-3">
+    <!-- <details class="mt-3">
       <summary>Debug</summary>
       <pre style="font-size:12px">{{ books }}</pre>
-    </details>
+    </details> -->
   </div>
 </template>
 
