@@ -1,55 +1,82 @@
 #!/usr/bin/env bash
-set -euo pipefail
+# Robust Laravel Entrypoint
+# - Composer install (idempotent)
+# - optionaler Vite-Build (inkl. devDependencies)
+# - DB-Warte-Logik
+# - Migrationen mit Retry
+# - Seeder optional
+# - Caches & Storage-Link
+# - Startet am Ende Apache im Vordergrund
 
-cd /var/www/html
+set -e
 
-# .env vorbereiten, falls noch nicht vorhanden
-if [ ! -f .env ]; then
-  cp .env.example .env || true
+# ----------------------------- Konfiguration per ENV -----------------------------
+APP_DIR="/var/www/html"
+
+: "${BUILD_ASSETS:=true}"              # npm build bei Start ausführen (true/false)
+: "${FORCE_ASSETS_BUILD:=false}"       # build erzwingen, auch wenn manifest existiert
+: "${NODE_ENV:=production}"            # default für Build-Phase; Install überschreibt temporär
+: "${CI:=true}"                        # npm im CI-Modus (ohne Interaktivität)
+
+: "${DB_HOST:=}"                       # wenn gesetzt, wird auf DB gewartet
+: "${DB_PORT:=3306}"
+: "${DB_WAIT_TIMEOUT:=60}"             # max Sekunden fürs Warten auf DB
+
+: "${LARAVEL_MIGRATE_ON_START:=true}"  # Migrationen ausführen (true/false)
+: "${MIGRATE_RETRIES:=10}"             # wie oft Migration versuchen
+: "${MIGRATE_RETRY_DELAY:=3}"          # Sekunden zwischen Versuchen
+
+: "${RUN_SEEDERS:=true}"               # Seeder ausführen (true/false)
+# -------------------------------------------------------------------------------
+
+cd "$APP_DIR"
+
+log()  { echo -e ">> $*"; }
+warn() { echo -e "!! $*" >&2; }
+
+# 1) .env anlegen, falls fehlt
+if [ ! -f .env ] && [ -f .env.example ]; then
+  log "No .env found — copying from .env.example"
+  cp .env.example .env
 fi
 
-# Basis-Setup
-php artisan key:generate --force || true
-php artisan storage:link || true
+# 2) Composer install (ohne dev, optimiert) – idempotent
+if [ -f composer.json ]; then
+  log "composer install"
+  composer install --no-interaction --prefer-dist --no-dev --optimize-autoloader
+else
+  log "No composer.json found – skipping composer install"
+fi
 
-# ENV-Defaults lesen
-APP_ENV_VAL=${APP_ENV:-production}
-BUILD_ASSETS_VAL=${BUILD_ASSETS:-true}
-FORCE_ASSETS_BUILD_VAL=${FORCE_ASSETS_BUILD:-false}
-
-# Dev-Optionen (kannst du per ENV übersteuern)
-MIGRATE_ON_START=${MIGRATE_ON_START:-true}   # nur Dev: Migrationen automatisch
-WAIT_FOR_DB_RETRIES=${WAIT_FOR_DB_RETRIES:-10}
-WAIT_FOR_DB_SLEEP=${WAIT_FOR_DB_SLEEP:-3}
-
-if [ "$APP_ENV_VAL" = "local" ]; then
-  echo "[entrypoint] DEV-Modus erkannt (APP_ENV=local)"
-
-  # Alle Caches weg, damit Änderungen/Fehler sofort sichtbar sind
-  php artisan optimize:clear || true
-
-  # Migrationen im Dev automatisch (mit kurzer Retry-Schleife, falls DB noch nicht bereit)
-  if [ "$MIGRATE_ON_START" = "true" ]; then
-    echo "[entrypoint] Führe Migrationen aus (mit bis zu $WAIT_FOR_DB_RETRIES Versuchen)"
-    attempt=1
-    until php artisan migrate --force; do
-      if [ "$attempt" -ge "$WAIT_FOR_DB_RETRIES" ]; then
-        echo "[entrypoint] Migrationen fehlgeschlagen nach $attempt Versuchen."
-        exit 1
-      fi
-      echo "[entrypoint] DB/Migration noch nicht bereit – Versuch $attempt fehlgeschlagen. Warte ${WAIT_FOR_DB_SLEEP}s …"
-      attempt=$((attempt+1))
-      sleep "$WAIT_FOR_DB_SLEEP"
-    done
-  else
-    echo "[entrypoint] Überspringe Migrationen (MIGRATE_ON_START=false)"
+# 3) Vite / Assets Build (optional & idempotent)
+if [ "${BUILD_ASSETS}" = "true" ] && [ -f package.json ]; then
+  need_build="false"
+  if [ ! -f public/build/manifest.json ]; then
+    need_build="true"
+  fi
+  if [ "${FORCE_ASSETS_BUILD}" = "true" ]; then
+    need_build="true"
   fi
 
-  # Kein Asset-Build im Dev – Vite-Dev-Server liefert die Assets
-  echo "[entrypoint] Überspringe Asset-Build (Vite-Dev-Server übernimmt)"
+  if [ "${need_build}" = "true" ]; then
+    log "Building front-end assets (install devDependencies + production build)"
+    # devDependencies installieren, unabhängig vom globalen NODE_ENV
+    if [ -f package-lock.json ]; then
+      NODE_ENV= npm ci --no-audit --no-fund
+    else
+      NODE_ENV= npm install --no-audit --no-fund
+    fi
 
+    # Production-Build erzeugen (z. B. Vite)
+    if NODE_ENV=production npm run build; then
+      log "Assets built successfully."
+    else
+      warn "Asset build failed"; exit 1
+    fi
+  else
+    log "Skipping asset build (public/build/manifest.json exists and FORCE_ASSETS_BUILD=false)."
+  fi
 else
-<<<<<<< HEAD
   log "Skipping asset build (BUILD_ASSETS=false or no package.json)."
 fi
   
@@ -75,24 +102,12 @@ if [ -n "${DB_HOST}" ]; then
   if nc -z "${DB_HOST}" "${DB_PORT}" >/dev/null 2>&1; then
     log "Database is up."
   fi
+
+  # Kein Asset-Build im Dev – Vite-Dev-Server liefert die Assets
+  echo "[entrypoint] Überspringe Asset-Build (Vite-Dev-Server übernimmt)"
+
 else
-  log "DB_HOST not set – skipping DB wait."
-fi
-
-# 6) Laravel-Tasks
-if [ -f artisan ]; then
-  log "Laravel bootstrap tasks"
-  php artisan key:generate --force || true
-  php artisan storage:link || true
-
-  # Caches sicher neu aufbauen
-  php artisan config:clear  || true
-  php artisan cache:clear   || true
-  php artisan route:clear   || true
-  php artisan view:clear    || true
-=======
   echo "[entrypoint] Nicht-DEV: wende Prod-Optimierungen an"
->>>>>>> styling_nav
 
   # Prod-Caches einschalten
   php artisan config:cache  || true
