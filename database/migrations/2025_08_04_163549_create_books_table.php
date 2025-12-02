@@ -14,6 +14,13 @@ return new class extends Migration
             $table->string('title');                            
             $table->string('author')->nullable();               
             $table->text('description')->nullable();           
+            $table->string('publisher')->nullable();                 
+            $table->string('published_at', 20)->nullable();          
+            $table->unsignedInteger('page_count')->nullable();       
+            $table->string('categories')->nullable();                
+            $table->string('cover', 2048)->nullable();    
+
+            $table->enum('confidence', ['high','medium','low']);
 
             $table->enum('status', ['available','borrowed','reserved','lost'])
                   ->default('available');
@@ -22,6 +29,7 @@ return new class extends Migration
                   ->default('new');
 
             $table->string('category_per_age')->nullable();
+
             $table->timestamps();
         });
     }
