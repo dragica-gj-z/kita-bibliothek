@@ -6,6 +6,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use App\Enums\BookCondition;
 use App\Enums\BookStatus;
+use App\Enums\KiConfidence;
 
 class Book extends Model
 {
@@ -13,31 +14,43 @@ class Book extends Model
 
     protected $table = 'books';
 
-    // Primärschlüssel
     protected $primaryKey = 'book_id';
     public $incrementing = true;
     protected $keyType = 'int';
 
-    // timestamps sind in deinen Migrationen vorhanden → Standard ist true
-    // public $timestamps = true; // (nur zur Info)
-
     protected $fillable = [
-        'isbn', 
-        'title', 
-        'author', 
+        'isbn',
+        'title',
+        'author',
         'description',
-        'status', 
-        'condition', 
+        'status',
+        'condition',
         'category_per_age',
+        'publisher',
+        'published_at',
+        'page_count',
+        'categories',
+        'cover',
+        'confidence',
     ];
 
-    // Wenn du Enums verwendest (empfohlen)
     protected $casts = [
         'condition' => BookCondition::class,
         'status'    => BookStatus::class,
+        'confidence' => KiConfidence::class,
     ];
     public function adults()
     {
         return $this->belongsToMany(Adult::class, 'adults_books');
+    }
+
+    public function getConfidenceLabelAttribute(): string
+    {
+        return match ($this->confidence) {
+            KiConfidence::HIGH   => 'hoch',
+            KiConfidence::MEDIUM => 'mittel',
+            KiConfidence::LOW    => 'niedrig',
+            default            => '-',
+        };
     }
 }

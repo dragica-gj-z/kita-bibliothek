@@ -1,82 +1,55 @@
 #!/usr/bin/env bash
-# Robust Laravel Entrypoint
-# - Composer install (idempotent)
-# - optionaler Vite-Build (inkl. devDependencies)
-# - DB-Warte-Logik
-# - Migrationen mit Retry
-# - Seeder optional
-# - Caches & Storage-Link
-# - Startet am Ende Apache im Vordergrund
+set -euo pipefail
 
-set -e
+cd /var/www/html
 
-# ----------------------------- Konfiguration per ENV -----------------------------
-APP_DIR="/var/www/html"
-
-: "${BUILD_ASSETS:=true}"              # npm build bei Start ausführen (true/false)
-: "${FORCE_ASSETS_BUILD:=false}"       # build erzwingen, auch wenn manifest existiert
-: "${NODE_ENV:=production}"            # default für Build-Phase; Install überschreibt temporär
-: "${CI:=true}"                        # npm im CI-Modus (ohne Interaktivität)
-
-: "${DB_HOST:=}"                       # wenn gesetzt, wird auf DB gewartet
-: "${DB_PORT:=3306}"
-: "${DB_WAIT_TIMEOUT:=60}"             # max Sekunden fürs Warten auf DB
-
-: "${LARAVEL_MIGRATE_ON_START:=true}"  # Migrationen ausführen (true/false)
-: "${MIGRATE_RETRIES:=10}"             # wie oft Migration versuchen
-: "${MIGRATE_RETRY_DELAY:=3}"          # Sekunden zwischen Versuchen
-
-: "${RUN_SEEDERS:=true}"               # Seeder ausführen (true/false)
-# -------------------------------------------------------------------------------
-
-cd "$APP_DIR"
-
-log()  { echo -e ">> $*"; }
-warn() { echo -e "!! $*" >&2; }
-
-# 1) .env anlegen, falls fehlt
-if [ ! -f .env ] && [ -f .env.example ]; then
-  log "No .env found — copying from .env.example"
-  cp .env.example .env
+# .env vorbereiten, falls noch nicht vorhanden
+if [ ! -f .env ]; then
+  cp .env.example .env || true
 fi
 
-# 2) Composer install (ohne dev, optimiert) – idempotent
-if [ -f composer.json ]; then
-  log "composer install"
-  composer install --no-interaction --prefer-dist --no-dev --optimize-autoloader
-else
-  log "No composer.json found – skipping composer install"
-fi
+# Basis-Setup
+php artisan key:generate --force || true
+php artisan storage:link || true
 
-# 3) Vite / Assets Build (optional & idempotent)
-if [ "${BUILD_ASSETS}" = "true" ] && [ -f package.json ]; then
-  need_build="false"
-  if [ ! -f public/build/manifest.json ]; then
-    need_build="true"
-  fi
-  if [ "${FORCE_ASSETS_BUILD}" = "true" ]; then
-    need_build="true"
-  fi
+# ENV-Defaults lesen
+APP_ENV_VAL=${APP_ENV:-production}
+BUILD_ASSETS_VAL=${BUILD_ASSETS:-true}
+FORCE_ASSETS_BUILD_VAL=${FORCE_ASSETS_BUILD:-false}
 
-  if [ "${need_build}" = "true" ]; then
-    log "Building front-end assets (install devDependencies + production build)"
-    # devDependencies installieren, unabhängig vom globalen NODE_ENV
-    if [ -f package-lock.json ]; then
-      NODE_ENV= npm ci --no-audit --no-fund
-    else
-      NODE_ENV= npm install --no-audit --no-fund
-    fi
+# Dev-Optionen (kannst du per ENV übersteuern)
+MIGRATE_ON_START=${MIGRATE_ON_START:-true}   # nur Dev: Migrationen automatisch
+WAIT_FOR_DB_RETRIES=${WAIT_FOR_DB_RETRIES:-10}
+WAIT_FOR_DB_SLEEP=${WAIT_FOR_DB_SLEEP:-3}
 
-    # Production-Build erzeugen (z. B. Vite)
-    if NODE_ENV=production npm run build; then
-      log "Assets built successfully."
-    else
-      warn "Asset build failed"; exit 1
-    fi
+if [ "$APP_ENV_VAL" = "local" ]; then
+  echo "[entrypoint] DEV-Modus erkannt (APP_ENV=local)"
+
+  # Alle Caches weg, damit Änderungen/Fehler sofort sichtbar sind
+  php artisan optimize:clear || true
+
+  # Migrationen im Dev automatisch (mit kurzer Retry-Schleife, falls DB noch nicht bereit)
+  if [ "$MIGRATE_ON_START" = "true" ]; then
+    echo "[entrypoint] Führe Migrationen aus (mit bis zu $WAIT_FOR_DB_RETRIES Versuchen)"
+    attempt=1
+    until php artisan migrate --force; do
+      if [ "$attempt" -ge "$WAIT_FOR_DB_RETRIES" ]; then
+        echo "[entrypoint] Migrationen fehlgeschlagen nach $attempt Versuchen."
+        exit 1
+      fi
+      echo "[entrypoint] DB/Migration noch nicht bereit – Versuch $attempt fehlgeschlagen. Warte ${WAIT_FOR_DB_SLEEP}s …"
+      attempt=$((attempt+1))
+      sleep "$WAIT_FOR_DB_SLEEP"
+    done
   else
-    log "Skipping asset build (public/build/manifest.json exists and FORCE_ASSETS_BUILD=false)."
+    echo "[entrypoint] Überspringe Migrationen (MIGRATE_ON_START=false)"
   fi
+
+  # Kein Asset-Build im Dev – Vite-Dev-Server liefert die Assets
+  echo "[entrypoint] Überspringe Asset-Build (Vite-Dev-Server übernimmt)"
+
 else
+<<<<<<< HEAD
   log "Skipping asset build (BUILD_ASSETS=false or no package.json)."
 fi
   
@@ -117,44 +90,38 @@ if [ -f artisan ]; then
   php artisan cache:clear   || true
   php artisan route:clear   || true
   php artisan view:clear    || true
+=======
+  echo "[entrypoint] Nicht-DEV: wende Prod-Optimierungen an"
+>>>>>>> styling_nav
 
+  # Prod-Caches einschalten
   php artisan config:cache  || true
   php artisan route:cache   || true
   php artisan view:cache    || true
 
-  # Migrationen mit Retry (Container bleibt am Leben)
-  if [ "${LARAVEL_MIGRATE_ON_START}" = "true" ]; then
-    log "Running migrations (retries: ${MIGRATE_RETRIES}, delay: ${MIGRATE_RETRY_DELAY}s)"
-    set +e
-    attempt=0
-    until php artisan migrate --force --no-interaction; do
-      code=$?
-      attempt=$((attempt+1))
-      warn "migrate failed (attempt ${attempt}/${MIGRATE_RETRIES}, exit=${code})"
-      if [ "${attempt}" -ge "${MIGRATE_RETRIES}" ]; then
-        warn "giving up on migrations; continuing startup"
-        break
-      fi
-      sleep "${MIGRATE_RETRY_DELAY}"
-    done
-    set -e
+  # Optional: Migrationen in Prod per ENV aktivierbar (standard: aus)
+  if [ "${RUN_MIGRATIONS_ON_START:-false}" = "true" ]; then
+    echo "[entrypoint] Prod: Führe Migrationen aus (RUN_MIGRATIONS_ON_START=true)"
+    php artisan migrate --force
   else
-    log "Skipping migrations (LARAVEL_MIGRATE_ON_START=false)."
+    echo "[entrypoint] Prod: Überspringe Migrationen (RUN_MIGRATIONS_ON_START=false)"
   fi
 
-  # Seeder (non-fatal)
-  if [ "${RUN_SEEDERS}" = "true" ]; then
-    log "Seeding database (non-fatal)"
-    set +e
-    php artisan db:seed --force
-    set -e
+  # Assets für Produktion bauen (falls nicht per ENV unterdrückt)
+  if [ "$FORCE_ASSETS_BUILD_VAL" = "true" ] || [ "$BUILD_ASSETS_VAL" = "true" ]; then
+    echo "[entrypoint] Baue Assets für Produktion"
+    npm ci
+    npm run build
   else
-    log "Skipping seeding (RUN_SEEDERS=false)."
+    echo "[entrypoint] Überspringe Asset-Build (via ENV)"
   fi
-else
-  log "No artisan found – skipping Laravel tasks."
 fi
 
-# 7) Apache im Vordergrund starten
-log "Starting Apache (foreground)"
-exec apache2-foreground
+# Rechte auf storage und bootstrap/cache setzen
+echo "[entrypoint] Setze Dateirechte für storage und bootstrap/cache"
+chown -R www-data:www-data storage bootstrap/cache
+chmod -R ug+rwx storage bootstrap/cache
+
+
+# Übergabe an den Container-CMD (Apache/PHP-FPM)
+exec "$@"

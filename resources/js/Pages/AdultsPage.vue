@@ -56,12 +56,10 @@ export default {
       }
   },
   
-
   computed: {
     // Sichtbare Spalten in gewünschter Reihenfolge; nur nehmen, was da ist
     columns() {
-      if (!this.books.length) return []
-      const wanted = [
+      return [
         'isbn',
         'title',
         'author',
