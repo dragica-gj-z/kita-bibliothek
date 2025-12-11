@@ -3,9 +3,8 @@
     "private": true,
     "type": "module",
     "scripts": {
-        "dev": "vite",
         "build": "vite build",
-        "preview": "vite preview --host 0.0.0.0 --port 4173"
+        "dev": "vite"
     },
     "devDependencies": {
         "@vitejs/plugin-vue": "^6.0.1",

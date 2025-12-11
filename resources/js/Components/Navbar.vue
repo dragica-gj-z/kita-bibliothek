@@ -1,7 +1,7 @@
 <template>
   <nav class="navbar navbar-expand-lg navbar-light bg-light">
     <div class="collapse navbar-collapse justify-content-end" id="navbarNav">
-        <p class="ms-5">Dragica Gjosheva Zafirova</p>
+        <p class="ms-5"></p>
 
       <ul class="navbar-nav ms-auto gap-2">
         <li class="nav-item dropdown">

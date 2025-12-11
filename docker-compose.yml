@@ -1,134 +1,60 @@
-# services:
-#   app:
-#     build:
-#       context: .
-#       dockerfile: Dockerfile
-#     environment:
-#       APP_ENV: production
-#       APP_DEBUG: "false"
-#       DB_CONNECTION: mysql
-#       DB_HOST: db
-#       DB_PORT: 3306
-#       DB_DATABASE: ${DB_DATABASE}
-#       DB_USERNAME: ${DB_USERNAME}
-#       DB_PASSWORD: ${DB_PASSWORD}
-#       RUN_SEEDERS: "true"
-#     volumes:
-#       - .:/var/www/html
-#     ports:
-#       - "8080:80"
-#     depends_on:
-#       db:
-#         condition: service_healthy
-
-#   db:
-#     image: mysql:8.0
-#     environment:
-#       MYSQL_DATABASE: ${DB_DATABASE}
-#       MYSQL_USER: ${DB_USERNAME}
-#       MYSQL_PASSWORD: ${DB_PASSWORD}
-#       MYSQL_ROOT_PASSWORD: ${DB_ROOT_PASSWORD}
-#     volumes:
-#       - dbdata:/var/lib/mysql
-#     healthcheck:
-#       # nutzt die gleiche Root-PW-Variable
-#       test: ["CMD-SHELL", "mysqladmin ping -h localhost -p${DB_ROOT_PASSWORD} || exit 1"]
-#       interval: 3s
-#       timeout: 3s
-#       retries: 20
-#     ports:
-#       - "3307:3306"
-
-#   phpmyadmin:
-#     image: phpmyadmin/phpmyadmin:latest
-#     restart: always
-#     ports:
-#       - "8081:80"
-#     environment:
-#       PMA_HOST: db
-#       PMA_PORT: 3306
-#       PMA_USER: root
-#       PMA_PASSWORD: ${DB_ROOT_PASSWORD}  # muss zum Root-PW passen
-#     depends_on:
-#       db:
-#         condition: service_healthy
-
-# volumes:
-#   dbdata:
-
 services:
   app:
     build:
       context: .
       dockerfile: Dockerfile
-    # CHANGED: Für Server-Deploy lieber prod-Defaults setzen
-    environment:
-      APP_ENV: production
-      APP_DEBUG: "false"
-      DB_CONNECTION: mysql
-      DB_HOST: db
-      DB_PORT: 3306
-      DB_DATABASE: ${DB_DATABASE}
-      DB_USERNAME: ${DB_USERNAME}
-      DB_PASSWORD: ${DB_PASSWORD}
-      # Disable runtime build in prod-like runs; assets are built by the assets job
-      BUILD_ASSETS: "false"
-    volumes:
-      - .:/var/www/html
-      - vite_build:/var/www/html/public/build
-    ports:
-      - "8080:80"
-    depends_on:
-      db:
-        condition: service_healthy
-      assets:
-        condition: service_completed_successfully
+    container_name: kita_app
     restart: unless-stopped
-
-  assets:
-    image: node:20
-    working_dir: /app
+    ports:
+      - "8000:80"
+    working_dir: /var/www/html
     volumes:
-      - .:/app
-      - vite_build:/app/public/build
-    command: >
-      sh -lc "CI=true npm ci --no-audit --no-fund &&
-              NODE_ENV=production npm run build"
-    restart: "no"
+      - ./:/var/www/html
+    env_file:
+      - .env
+    depends_on:
+      - db
 
   db:
     image: mysql:8.0
+    container_name: kita_db
+    restart: unless-stopped
     environment:
       MYSQL_DATABASE: ${DB_DATABASE}
       MYSQL_USER: ${DB_USERNAME}
       MYSQL_PASSWORD: ${DB_PASSWORD}
       MYSQL_ROOT_PASSWORD: ${DB_ROOT_PASSWORD}
-    volumes:
-      - dbdata:/var/lib/mysql
-    healthcheck:
-      test: ["CMD-SHELL", "mysqladmin ping -h localhost -p${DB_ROOT_PASSWORD} || exit 1"]
-      interval: 3s
-      timeout: 3s
-      retries: 20
     ports:
-      - "3307:3306"
-    restart: unless-stopped
+      - "3306:3306"
+    volumes:
+      - db_data:/var/lib/mysql
+
+  vite:
+    image: node:20-alpine
+    container_name: kita_vite
+    working_dir: /app
+    volumes:
+      - ./:/app
+    command: ["npm", "run", "dev", "--", "--host", "0.0.0.0", "--port", "5173"]
+    ports:
+      - "5173:5173"
+    depends_on:
+      - app
 
   phpmyadmin:
-    image: phpmyadmin:5
+    image: phpmyadmin/phpmyadmin:latest
+    container_name: kita_phpmyadmin
     restart: unless-stopped
     ports:
-      - "8081:80"
+      - "8080:80"
     environment:
       PMA_HOST: db
       PMA_PORT: 3306
-      PMA_USER: root
-      PMA_PASSWORD: ${DB_ROOT_PASSWORD}
+      PMA_USER: ${DB_USERNAME}
+      PMA_PASSWORD: ${DB_PASSWORD}
+      UPLOAD_LIMIT: 256M
     depends_on:
-      db:
-        condition: service_healthy
+      - db
 
 volumes:
-  dbdata:
-  vite_build:
-
+  db_data:

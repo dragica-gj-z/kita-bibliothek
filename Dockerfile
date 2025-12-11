@@ -1,53 +1,73 @@
+############################
+# 1. Frontend-Build (Vite) #
+############################
+FROM node:20-alpine AS frontend
+
+WORKDIR /app
+
+COPY package*.json vite.config.* ./
+COPY resources ./resources
+COPY public ./public
+
+RUN npm install
+RUN npm run build
+
+
+############################
+# 2. PHP + Apache / Laravel #
+############################
 FROM php:8.2-apache
 
-# Systempakete & PHP-Extensions
-# - curl/gnupg/ca-certificates: für Nodesource GPG-Setup
-# - netcat-openbsd: für DB-Wait im entrypoint
-# - build-essential + python3: häufig benötigt für node-gyp (native npm-Module)
+# Systempakete und PHP-Extensions
 RUN apt-get update && apt-get install -y \
-    ca-certificates curl gnupg \
-    libzip-dev zip unzip git nano netcat-openbsd \
-    build-essential python3 \
- && docker-php-ext-install pdo_mysql zip \
- && rm -rf /var/lib/apt/lists/*
+    git \
+    curl \
+    zip \
+    unzip \
+    libzip-dev \
+    libpng-dev \
+    libonig-dev \
+    libxml2-dev \
+    && docker-php-ext-install pdo_mysql mbstring exif pcntl bcmath gd zip \
+    && a2enmod rewrite \
+    && rm -rf /var/lib/apt/lists/*
 
-# Node.js 20 + npm (Nodesource)
-RUN mkdir -p /etc/apt/keyrings \
- && curl -fsSL https://deb.nodesource.com/gpgkey/nodesource-repo.gpg.key \
- | gpg --dearmor -o /etc/apt/keyrings/nodesource.gpg \
- && echo "deb [signed-by=/etc/apt/keyrings/nodesource.gpg] https://deb.nodesource.com/node_20.x nodistro main" \
- > /etc/apt/sources.list.d/nodesource.list \
- && apt-get update && apt-get install -y nodejs \
- && node -v && npm -v
-# Apache Rewrite
-RUN a2enmod rewrite
 
-# DocumentRoot auf /public umstellen und <Directory>-Block ergänzen
-RUN sed -i 's|DocumentRoot /var/www/html|DocumentRoot /var/www/html/public|' /etc/apache2/sites-available/000-default.conf \
- && printf '%s\n' \
-    '<Directory /var/www/html/public>' \
-    '    Options Indexes FollowSymLinks' \
-    '    AllowOverride All' \
-    '    Require all granted' \
-    '</Directory>' >> /etc/apache2/apache2.conf
-
-# Composer
-COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
-
+# Arbeitsverzeichnis
 WORKDIR /var/www/html
 
-# Rechte (optional – meist durch Bind-Mount egal)
-RUN chown -R www-data:www-data /var/www/html
-RUN git config --global --add safe.directory /var/www/html
+# Composer aus offiziellem Image
+COPY --from=composer:2 /usr/bin/composer /usr/bin/composer
 
-# Flags für Asset-Build im entrypoint
-ENV BUILD_ASSETS=true \
-    NODE_ENV=production \
-    CI=true
+# Restliche App
+COPY . .
 
-# Entrypoint
+# Dependencies installieren
+RUN composer install --no-dev --prefer-dist --no-interaction --no-progress
+
+# Gebaute Frontend-Assets aus dem Node-Stage
+COPY --from=frontend /app/public/build ./public/build
+
+# Rechte für Laravel (Verzeichnisse sicherstellen & Rechte setzen)
+RUN mkdir -p storage bootstrap/cache \
+    && chown -R www-data:www-data storage bootstrap/cache \
+    && chmod -R 775 storage bootstrap/cache
+
+
+# DocumentRoot auf /public setzen und Laravel-Directory konfigurieren
+RUN sed -ri -e 's!DocumentRoot /var/www/html!DocumentRoot /var/www/html/public!g' /etc/apache2/sites-available/000-default.conf \
+    && printf '<Directory /var/www/html/public>\n\
+    Options Indexes FollowSymLinks\n\
+    AllowOverride All\n\
+    Require all granted\n\
+    </Directory>\n' > /etc/apache2/conf-available/laravel.conf \
+    && a2enconf laravel
+
+# Entrypoint-Script kopieren
 COPY docker/entrypoint.sh /usr/local/bin/entrypoint.sh
 RUN chmod +x /usr/local/bin/entrypoint.sh
 
+EXPOSE 80
+
 ENTRYPOINT ["entrypoint.sh"]
-CMD ["apache2-foreground"]  
+CMD ["apache2-foreground"]
