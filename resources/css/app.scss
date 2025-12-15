@@ -1,3 +1,5 @@
+@import "bootstrap/scss/bootstrap";
+@import "bootstrap-icons/font/bootstrap-icons.css";
 body {
   font-family: 'Arial', sans-serif;
   margin: 0;
@@ -14,6 +16,17 @@ body {
     white-space: pre-line;
     color: #f31717;
 }
+
+.btn-primary {
+  cursor: pointer;
+  background-color: #5824E5;
+  color: white;
+  border: none;
+}
+.btn-primary:hover {
+  background-color: #11016D;
+}
+
 
 
 @import 'home-page';

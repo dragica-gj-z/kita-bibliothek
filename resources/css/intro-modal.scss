@@ -1,0 +1,34 @@
+
+.copyable code {
+    padding: 0.15rem 0.35rem;
+}
+
+.copyable:hover code {
+    text-decoration: underline;
+}
+
+.modal-dialog {
+    border: 0;
+
+    .modal-content {
+        border: 13px solid transparent;
+        border-radius: 15px;
+        background:
+            linear-gradient(#fff, #fff) padding-box,
+            linear-gradient(
+                35deg,
+                    #461db7 10%,
+                    #7c3aed 20%,
+                    #22c55e 60%,
+                    #9af951 90%) 
+                    border-box;
+        overflow: hidden; 
+        box-shadow: 0 8px 20px rgba(240, 240, 237, 0.1);
+    }
+    .alert-info {
+        background-color: #eff0ee;
+        border: 0.1px solid #461db7;
+        color: #0369a1;
+    }
+}
+

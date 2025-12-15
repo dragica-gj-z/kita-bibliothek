@@ -17,7 +17,7 @@
                   :disabled="autofillLoading || !form.isbn"
                   @click="autofillFromIsbn"
                   title="Füllt alle Felder per ISBN">
-            {{ autofillLoading ? 'Lade…' : 'Auto ausfüllen' }}
+            {{ autofillLoading ? 'Lade…' : 'Mit KI autoausfühlen' }}
           </button>
         </div>
         <small v-if="errors.isbn" style="color:#c00">{{ errors.isbn }}</small>

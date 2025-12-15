@@ -16,7 +16,9 @@
             >
 
         <!-- Styles / Scripts -->
-        @vite(['resources/css/app.scss', 'resources/js/app.js'])
+        <!-- @vite(['resources/css/app.scss', 'resources/js/app.js']) -->
+                 @vite(['resources/js/app.js'])
+
     </head>
     <body>
         <div id="app"></div>

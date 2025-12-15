@@ -10,56 +10,6 @@ use App\Enums\KiConfidence;
 
 class KiFormController extends Controller
 {
-    // public function autofill(Request $request)
-    // {
-    //     $data = $request->validate([
-    //         'isbn' => 'required|string',
-    //         'lang' => 'nullable|string|in:de'
-    //     ]);
-
-    //     $isbn = $this->normalizeIsbn($data['isbn']);
-
-    //     if (!$isbn) {
-    //         return response()->json(['error' => 'Ungültige ISBN'], 422);
-    //     }
-
-    //     $lang = $data['lang'] ?? 'de';
-
-    //     // Metadaten zuerst von Open Library holen (kostenlos, kein API-Key nötig)
-    //     $meta = $this->fetchFromOpenLibrary($isbn);
-
-    //     // Fallback: Wenn Open Library nichts liefert, Google Books versuchen
-    //     if (!$meta) {
-    //         $meta = $this->fetchFromGoogleBooks($isbn);
-    //     }
-
-    //     // Wenn beide Quellen keine Daten liefern, Fehler 404 zurückgeben
-    //     if (!$meta) {
-    //         return response()->json(['error' => 'Keine Metadaten gefunden. Prüfe ISBN.'], 404);
-    //     }
-
-    //     // Gemini aufrufen, um aus den Metadaten eine Kurzbeschreibung + Altersempfehlung zu erzeugen
-    //     // summarizeWithGemini gibt ein Array mit 4 Werten zurück:
-    //     // [0] = summary (Text), [1] = ageMin, [2] = ageMax, [3] = confidence
-    //     [$summary, $ageMin, $ageMax, $confidence] = $this->summarizeWithGemini($meta, $lang);
-
-    //     // JSON-Antwort fürs Frontend-Formular zusammenbauen
-    //     return response()->json([
-    //         'isbn'        => $isbn,                       // Normalisierte ISBN
-    //         'title'       => $meta['title']        ?? null,
-    //         'authors'     => $meta['authors']      ?? [],
-    //         'publisher'   => $meta['publisher']    ?? null,
-    //         'publishedAt' => $meta['publishedAt']  ?? null,
-    //         'pageCount'   => $meta['pageCount']    ?? null,
-    //         'language'    => $meta['language']     ?? null,
-    //         'categories'  => $meta['categories']   ?? [],
-    //         'cover'       => $meta['cover']        ?? null,
-    //         'description' => $summary,                    // KI-generierte Kurzbeschreibung
-    //         'age'         => ['min' => $ageMin, 'max' => $ageMax], 
-    //         'confidence'  => $confidence                  // Einschätzung von Gemini (high/medium/low oder null)
-    //     ]);
-    // }
-
     public function autofill(Request $request)
 {
     $data = $request->validate([
@@ -130,9 +80,7 @@ class KiFormController extends Controller
         'confidence_label' => $this->confidenceLabel($confEnum),
     ]);
 }
-    /**
-     * Fallback-Heuristik, falls Gemini keinen Confidence-Wert liefert.
-     */
+    // Fallback-Heuristik, falls Gemini keinen Confidence-Wert liefert.
     private function inferConfidence(?string $summary, ?int $ageMin, ?int $ageMax): KiConfidence
     {
         if ($summary && $ageMin !== null && $ageMax !== null) {
@@ -146,9 +94,8 @@ class KiFormController extends Controller
         return KiConfidence::LOW;
     }
 
-    /**
-     * Label für Frontend (deutsche Anzeige).
-     */
+
+     // Label für Frontend (deutsche Anzeige).
     private function confidenceLabel(KiConfidence $confidence): string
     {
         return match ($confidence) {

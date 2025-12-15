@@ -1,6 +1,4 @@
-############################
-# 1. Frontend-Build (Vite) #
-############################
+# 1. Frontend-Build (Vite) 
 FROM node:20-alpine AS frontend
 
 WORKDIR /app
@@ -13,9 +11,7 @@ RUN npm install
 RUN npm run build
 
 
-############################
-# 2. PHP + Apache / Laravel #
-############################
+# 2. PHP + Apache / Laravel 
 FROM php:8.2-apache
 
 # Systempakete und PHP-Extensions

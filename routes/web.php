@@ -5,7 +5,6 @@ use App\Http\Controllers\AuthController;
 use App\Http\Controllers\AddBooksController;
 use App\Http\Controllers\ShowBooksController;
 use App\Http\Controllers\KiFormController;
-// use Illuminate\View\View; // nur nötig, wenn du den Rückgabetyp annotierst
 
 Route::post('/register', [AuthController::class, 'register']);
 Route::post('/login', [AuthController::class, 'login']);
