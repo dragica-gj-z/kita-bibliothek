@@ -80,44 +80,8 @@
               <div class="alert alert-info mb-0">
                 <h5 class="mb-2">Demo-Login</h5>
 
-                <div class="mb-1">
-                  <strong>E-Mail:</strong>
-                  <span
-                    class="copyable"
-                    role="button"
-                    tabindex="0"
-                    data-bs-toggle="tooltip"
-                    data-bs-placement="top"
-                    data-bs-html="true"
-                    :data-bs-title="tooltipCopyHtml"
-                    data-copy-key="email"
-                    @click="copy(demoEmail, 'email')"
-                    @keydown.enter.prevent="copy(demoEmail, 'email')"
-                    @keydown.space.prevent="copy(demoEmail, 'email')"
-                    >
-                    <code>{{ demoEmail }}</code>
-                </span>
-
-                </div>
-
-                <div>
-                  <strong>Passwort:</strong>
-                  <span
-                    class="copyable"
-                    role="button"
-                    tabindex="0"
-                    data-bs-toggle="tooltip"
-                    data-bs-placement="top"
-                    data-bs-html="true"
-                    :data-bs-title="tooltipCopyHtml"
-                    data-copy-key="password"
-                    @click="copy(demoPassword, 'password')"
-                    @keydown.enter.prevent="copy(demoPassword, 'password')"
-                    @keydown.space.prevent="copy(demoPassword, 'password')"
-                  >
-                    <code>{{ demoPassword }}</code>
-                  </span>
-                </div>
+                <div><strong>E-Mail:</strong> <code>{{ demoEmail }}</code></div>
+                <div><strong>Passwort:</strong> <code>{{ demoPassword }}</code></div>
 
                 <div class="mt-2 small">
                   Hinweis: Bitte keine echten persönlichen Daten verwenden – nutze für Tests gern Fantasie-Daten.
@@ -138,7 +102,9 @@
         </div>
       </div>
     </div>
+    
   </div>
+ 
 </template>
 
 <script>
@@ -155,11 +121,6 @@ export default {
       modalInstance: null,
       demoEmail: "test@test.de",
       demoPassword: "test1234",
-
-      tooltips: new Map(),
-      _ttTimer: null,
-      tooltipCopyHtml: "<i class='bi bi-copy'></i> Kopieren",
-      tooltipCopiedHtml: "<i class='bi bi-check2'></i> Kopiert",
     };
   },
 
@@ -168,73 +129,16 @@ export default {
 
     this.modalInstance = window.bootstrap.Modal.getOrCreateInstance(this.$refs.modalEl);
 
-    // Tooltips erst initialisieren, wenn Modal sichtbar ist
-    this.$refs.modalEl.addEventListener("shown.bs.modal", this.initTooltips);
-
     if (this.autoShow) this.modalInstance.show();
-  },
-
-  beforeUnmount() {
-    if (this._ttTimer) clearTimeout(this._ttTimer);
-
-    this.tooltips.forEach((t) => t.dispose());
-    this.tooltips.clear();
-
-    if (this.$refs.modalEl) {
-      this.$refs.modalEl.removeEventListener("shown.bs.modal", this.initTooltips);
-    }
-
-    this.modalInstance?.dispose();
-  },
+},
 
   methods: {
-    open() {
-      this.modalInstance?.show();
-    },
-
     close() {
       this.modalInstance?.hide();
-    },
-
-    initTooltips() {
-        this.tooltips.forEach(t => t.dispose());
-        this.tooltips.clear();
-
-        const els = this.$refs.modalEl.querySelectorAll('[data-bs-toggle="tooltip"]');
-        els.forEach(el => {
-        const key = el.getAttribute("data-copy-key");
-        const tt = new window.bootstrap.Tooltip(el, { trigger: "hover focus", html: true });
-        if (key) this.tooltips.set(key, tt);
-        });
-    },
-
-    async copy(text, key) {
-        await navigator.clipboard.writeText(text);
-
-        const el = this.$refs.modalEl.querySelector(`[data-copy-key="${key}"]`);
-        const tt = this.tooltips.get(key);
-        if (!el || !tt) return;
-
-        el.setAttribute("data-bs-title", this.tooltipCopiedHtml);
-
-        tt.dispose();
-        const manualTt = new window.bootstrap.Tooltip(el, { trigger: "manual", html: true });
-        this.tooltips.set(key, manualTt);
-
-        manualTt.show();
-
-        clearTimeout(this._ttTimer);
-        this._ttTimer = setTimeout(() => {
-        manualTt.hide();
-        el.setAttribute("data-bs-title", this.tooltipCopyHtml);
-        manualTt.dispose();
-        this.tooltips.set(key, new window.bootstrap.Tooltip(el, { trigger: "hover focus", html: true }));
-        }, 900);
     },
   },
 };
 </script>
 
-<style lang="scss" src="../../css/app.scss"></style>
 <style lang="scss" src="../../css/intro-modal.scss"></style>
 

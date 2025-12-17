@@ -28,14 +28,25 @@
       border-radius: 10px;
       box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
       width: 300px;
-    }
-    .button-group {
-      display: flex;
-      justify-content: space-between;
-      margin-top: 1.5rem;
-      button {
-        width: 48%;
-      }
-    }
 
+      .button-group {
+          display: flex;
+          justify-content: space-between;
+          margin: 1.5rem 0 1.5rem 0;
+    
+          button {
+            width: 48%;
+          }
+        }
+        h5 {
+          padding-top: 1rem;
+          font-size: large;
+        }
+        .demo-login {
+          margin-top: 1rem;
+          border-top: 1px solid grey;
+          border-color: #dee2e6;
+        }
+    }
+    
 }
